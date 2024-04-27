@@ -6,6 +6,9 @@ name = "pypi"
 [packages]
 websockets = "*"
 django = "==4.2.2"
+channels = "*"
+uvicorn = "*"
+watchfiles = "*"
 
 [dev-packages]
 

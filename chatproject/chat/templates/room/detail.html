@@ -1,0 +1,57 @@
+<h2>ルーム詳細</h2>
+<p>ルーム名: {{room.name}}</p>
+<p>作成者: {{room.posted_by.username}}</p>
+<p>作成日時: {{room.created_at}}</p>
+
+<h2>メッセージ一覧</h2>
+<div id="chat_list">
+{% for message in messages %}
+    <p>{{ message.posted_by.username }}: {{ message.content }}</p>
+{% endfor %}
+
+
+<h2>メッセージを送る</h2>
+{% if user.is_authenticated %}
+<form>
+    <input type="text" id="message">
+    <button type="button" id="send">送信</button>
+</form>
+
+<form method="post">
+    {% csrf_token %}
+    {{form.as_p}}
+    <button type="submit">送信</button>
+</form>
+{% else %}
+<a href="{% url 'login' %}?next={ % url 'room.detail' room.id%}">ログインしてメッセージを送る</a>
+{% endif %}
+
+<script>
+    const url = 'ws://' + window.location.host + '/ws/chat/{{room.id}}/';
+    const ws = new WebSocket(url);
+
+    document.getElementById('send').onclick = function sendMessage() { 
+        const SendData = { 
+            message: document.getElementById('message').value,
+        }
+        ws.send(JSON.stringify(SendData));
+        document.getElementById('message').value = '';
+    }
+    
+    ws.onerror = e => {
+        console.log(e);
+    
+    }
+
+    ws.onemessage = e => {
+        const receiveData = JSON.parse(e.data);
+        console.log(receiveData);
+        const p = document.getElement('p');
+        p.textContent = receiveData.user + ':' + receiveData.message;
+        document.getElementById('chat-list').appendChild(p);
+    }
+</script>
+
+
+<a href="{% url 'room.list' %}">ルーム一覧</a>
+

@@ -1,7 +1,8 @@
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.views import generic
+from django.shortcuts import redirect
 from django.urls import reverse_lazy
-from .forms import CreateRoomForm
+from .forms import CreateRoomForm, MessageForm
 from .models import Room
 
 class HomeView(generic.TemplateView):
@@ -20,3 +21,23 @@ class RoomCreateView(LoginRequiredMixin, generic.CreateView):
 class RoomListView(generic.ListView):
     model = Room
     template_name = "room/list.html"
+
+
+class RoomDetailView(generic.DetailView):
+    template_name = "room/detail.html"
+    model = Room
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['messages'] = self.object.messages.all()
+        context["form"] = MessageForm()
+        return context
+    
+    def post(self, request, *args, **kwargs):
+        form = MessageForm(request.POST)
+        if form.is_valid():
+            form.instance.room = self.get_object()
+            form.instance.posted_by = request.user
+            form.save()
+            return redirect("room.detail", pk=self.get_object().pk)
+        return super().get(request, *args, **kwargs)
